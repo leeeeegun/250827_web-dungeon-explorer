@@ -4,12 +4,11 @@ import com.example.webdungeonexplorer.dto.GameStateResponse;
 import com.example.webdungeonexplorer.model.GameMap;
 import com.example.webdungeonexplorer.model.Player;
 import com.example.webdungeonexplorer.model.TileType;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 
 import java.util.Collections;
-import java.util.stream.Collectors;
 
-@Slf4j
+@Service
 public class GameService {
 
     private GameMap gameMap;
