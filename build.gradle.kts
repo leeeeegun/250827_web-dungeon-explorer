@@ -34,8 +34,7 @@ repositories {
 dependencies {
     // Spring Web: REST API와 웹 서버 기능
     implementation("org.springframework.boot:spring-boot-starter-web")
-    // WebSocket: 실시간 통신 기능
-    implementation("org.springframework.boot:spring-boot-starter-websocket")
+    
     // Lombok: Getter, Setter 등 보일러플레이트 코드 감소
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")

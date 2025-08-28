@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("api/gome")
+@RequestMapping("api/game")
 public class GameController {
 
     private final GameService gameService;
@@ -17,8 +17,8 @@ public class GameController {
         this.gameService = gameService;
     }
 
-    // 현재 게임 상태를 조회하는 API
-    @GetMapping("/state")
+    // 게임 시작 API
+    @PostMapping("/start")
     public GameStateResponse getGameState() {
         return gameService.getGameState();
     }
