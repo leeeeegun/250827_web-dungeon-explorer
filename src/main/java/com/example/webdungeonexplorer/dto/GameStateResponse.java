@@ -22,6 +22,7 @@ public class GameStateResponse {
         private int x;
         private int y;
         private int hp;
+        private List<String> inventory;
     }
 
     @Data
