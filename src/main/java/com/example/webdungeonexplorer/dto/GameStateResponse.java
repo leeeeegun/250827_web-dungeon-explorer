@@ -12,6 +12,7 @@ public class GameStateResponse {
     private String[][] map; // 프론트엔드가 쓰기 쉽게 배열 변환
     private PlayerInfo player;
     private List<MonsterInfo> monsters;
+    private List<ItemInfo> items;
     private String message; // 게임 메세지
 
     // 이중 DTO
@@ -29,5 +30,13 @@ public class GameStateResponse {
         private int x;
         private int y;
         private int hp;
+    }
+
+    @Data
+    @Builder
+    public static class ItemInfo {
+        private int x;
+        private int y;
+        private String name;
     }
 }
