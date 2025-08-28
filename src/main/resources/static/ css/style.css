@@ -31,5 +31,15 @@ body {
     background-color: #61dafb;
     border-radius: 50%;
     z-index: 10;
+}
 
+
+.MONSTER {
+    background-color: #ff6961; /* 몬스터는 빨간색 */
+    border-radius: 50%;
+}
+
+.ITEM {
+    background-color: #f8d568; /* 아이템은 노란색 */
+    border-radius: 20%;
 }
