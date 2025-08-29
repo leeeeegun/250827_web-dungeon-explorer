@@ -72,3 +72,13 @@ canvas {
     min-height: 100px; /* 메시지 영역 높이 확보 */
     white-space: pre-wrap; /* 메시지 줄바꿈 처리 */
 }
+
+#controls-info ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#controls-info li {
+    margin-top: 5px;
+}

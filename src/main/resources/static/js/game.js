@@ -108,6 +108,7 @@ const SPRITES = {
     MONSTER: '👹',
     BOSS: '👿',
     ITEM: '🔑',
+    POTION: '🧪', // 물약 아이콘 추가
     WALL: '🧱',
     FLOOR: '⬛'
 };
@@ -143,6 +144,10 @@ function renderGame(gameState) {
                      } else {
                          sprite = SPRITES.MONSTER;
                      }
+                } else if (tileType === 'POTION') {
+                    sprite = SPRITES.POTION;
+                } else if (tileType === 'ITEM') {
+                    sprite = SPRITES.ITEM;
                 }
 
                 if (sprite) {
@@ -162,7 +167,7 @@ function renderGame(gameState) {
     }
 
     // UI 업데이트
-    hpValueEl.textContent = player.hp;
+    hpValueEl.textContent = `${player.hp} / ${player.maxHp}`;
     inventoryListEl.innerHTML = '';
     if (player.inventory && player.inventory.length > 0) {
         player.inventory.forEach(item => {
