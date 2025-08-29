@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -18,68 +19,151 @@ public class GameService {
     private Player player;
     private List<Monster> monsters;
     private List<Item> items;
+    private final Random random = new Random();
 
     public GameService() {
         initializeGame();
     }
 
-    // 게임 초기화 로직
     private void initializeGame() {
+        generateDungeon(30, 30, 10, 5, 10);
 
-        // 10 x 10 크기의 맵 생성
-        gameMap = new GameMap(10, 10);
-        // 플레이어는 (1,1) 위치에 생성
-        player = new Player(1, 1, 100, 15);
+        // 아이템 및 몬스터 초기화
         monsters = new ArrayList<>();
         items = new ArrayList<>();
 
-        // 맵 데이터 생성 (테두리는 벽, 내부는 바닥)
-        for (int y = 0; y < gameMap.getHeight(); y++) {
-            for (int x = 0; x < gameMap.getWidth(); x++) {
-                if (y == 0 || y == gameMap.getHeight() - 1 || x == 0 || x == gameMap.getWidth() - 1) {
-                    gameMap.setTile(x, y, TileType.WALL);
-                } else {
-                    gameMap.setTile(x, y, TileType.FLOOR);
-                }
+        // 플레이어 배치
+        player = new Player(0, 0, 100, 15);
+        placePlayerInEmptyRoom();
+
+        // 몬스터, 아이템, 보스 배치
+        placeEntities(10, 3, 1);
+    }
+
+    private void generateDungeon(int width, int height, int maxRooms, int minRoomSize, int maxRoomSize) {
+        gameMap = new GameMap(width, height);
+        // 모든 타일을 벽으로 초기화
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                gameMap.setTile(x, y, TileType.WALL);
             }
         }
 
-        // 몬스터와 아이템 배치
-        monsters.add(new Monster(7, 7, 50, 10));
-        items.add(new Item(8, 2, "KEY"));
+        List<Room> rooms = new ArrayList<>();
+        for (int i = 0; i < maxRooms; i++) {
+            int roomWidth = random.nextInt(maxRoomSize - minRoomSize + 1) + minRoomSize;
+            int roomHeight = random.nextInt(maxRoomSize - minRoomSize + 1) + minRoomSize;
+            int x = random.nextInt(width - roomWidth - 1) + 1;
+            int y = random.nextInt(height - roomHeight - 1) + 1;
+
+            Room newRoom = new Room(x, y, roomWidth, roomHeight);
+            boolean intersects = false;
+            for (Room otherRoom : rooms) {
+                if (newRoom.intersects(otherRoom)) {
+                    intersects = true;
+                    break;
+                }
+            }
+
+            if (!intersects) {
+                rooms.add(newRoom);
+                createRoom(newRoom);
+
+                if (rooms.size() > 1) {
+                    Room prevRoom = rooms.get(rooms.size() - 2);
+                    createCorridor(newRoom.getCenterX(), newRoom.getCenterY(), prevRoom.getCenterX(), prevRoom.getCenterY());
+                }
+            }
+        }
     }
 
-    // 전투 로직
+    private void createRoom(Room room) {
+        for (int y = room.y; y < room.y + room.height; y++) {
+            for (int x = room.x; x < room.x + room.width; x++) {
+                gameMap.setTile(x, y, TileType.FLOOR);
+            }
+        }
+    }
+
+    private void createCorridor(int x1, int y1, int x2, int y2) {
+        int currentX = x1;
+        int currentY = y1;
+
+        while (currentX != x2) {
+            gameMap.setTile(currentX, currentY, TileType.FLOOR);
+            currentX += (x2 > x1) ? 1 : -1;
+        }
+        while (currentY != y2) {
+            gameMap.setTile(currentX, currentY, TileType.FLOOR);
+            currentY += (y2 > y1) ? 1 : -1;
+        }
+        gameMap.setTile(currentX, currentY, TileType.FLOOR);
+    }
+
+    private void placePlayerInEmptyRoom() {
+        List<int[]> emptyCells = getEmptyCells();
+        int[] pos = emptyCells.get(random.nextInt(emptyCells.size()));
+        player.setX(pos[0]);
+        player.setY(pos[1]);
+    }
+
+    private void placeEntities(int monsterCount, int itemCount, int bossCount) {
+        List<int[]> emptyCells = getEmptyCells();
+        Collections.shuffle(emptyCells);
+
+        // 몬스터 배치
+        for (int i = 0; i < monsterCount && !emptyCells.isEmpty(); i++) {
+            int[] pos = emptyCells.remove(0);
+            monsters.add(new Monster(pos[0], pos[1], 30, 8, false));
+        }
+
+        // 아이템 배치
+        for (int i = 0; i < itemCount && !emptyCells.isEmpty(); i++) {
+            int[] pos = emptyCells.remove(0);
+            items.add(new Item(pos[0], pos[1], "GOLD_KEY"));
+        }
+
+        // 보스 배치
+        for (int i = 0; i < bossCount && !emptyCells.isEmpty(); i++) {
+            int[] pos = emptyCells.remove(0);
+            monsters.add(new Monster(pos[0], pos[1], 150, 25, true)); // isBoss = true
+        }
+    }
+
+    private List<int[]> getEmptyCells() {
+        List<int[]> emptyCells = new ArrayList<>();
+        for (int y = 0; y < gameMap.getHeight(); y++) {
+            for (int x = 0; x < gameMap.getWidth(); x++) {
+                if (gameMap.getTiles()[y][x] == TileType.FLOOR) {
+                    emptyCells.add(new int[]{x, y});
+                }
+            }
+        }
+        return emptyCells;
+    }
+
     public GameStateResponse attack() {
         String message = "공격할 대상이 근처에 없습니다.";
-
-        // 플레이어 주변에 있는 몬스터를 찾는다.
         Monster targetMonster = monsters.stream()
                 .filter(m -> Math.abs(m.getX() - player.getX()) <= 1 && Math.abs(m.getY() - player.getY()) <= 1)
                 .findFirst()
                 .orElse(null);
 
         if (targetMonster != null) {
-            // 플레이어가 몬스터 공격
             targetMonster.setHp(targetMonster.getHp() - player.getAttackPower());
-
-            // 몬스터가 플레이어 반격
             if (targetMonster.getHp() > 0) {
                 player.setHp(player.getHp() - targetMonster.getAttackPower());
-                message = "몬스터와 공격을 주고 받았습니다!";
+                message = (targetMonster.isBoss() ? "보스" : "몬스터") + "와 공격을 주고 받았습니다!";
             } else {
-                message = "몬스터를 물리쳤습니다!";
-                monsters.remove(targetMonster); // 몬스터 디짐
+                message = (targetMonster.isBoss() ? "보스" : "몬스터") + "를 물리쳤습니다!";
+                monsters.remove(targetMonster);
             }
         }
         return getGameState(message);
     }
 
-    // 아이템 줍기 로직
     public GameStateResponse pickupItem() {
         String message = "주울 아이템이 없습니다.";
-
-        // 플레이어와 같은 위치에 있는 아이템을 찾는다.
         Item targetItem = items.stream()
                 .filter(i -> i.getX() == player.getX() && i.getY() == player.getY())
                 .findFirst()
@@ -87,7 +171,7 @@ public class GameService {
 
         if (targetItem != null) {
             player.getInventory().add(targetItem);
-            items.remove(targetItem); // 맵에서 아이템 제거
+            items.remove(targetItem);
             message = targetItem.getName() + "을(를) 주웠습니다!";
         }
         return getGameState(message);
@@ -98,10 +182,10 @@ public class GameService {
         int newY = player.getY();
 
         switch (direction.toUpperCase()) {
-            case "UP":      newY--; break;
-            case "DOWN":    newY++; break;
-            case "LEFT":    newX--; break;
-            case "RIGHT":   newX++; break;
+            case "UP": newY--; break;
+            case "DOWN": newY++; break;
+            case "LEFT": newX--; break;
+            case "RIGHT": newX++; break;
         }
 
         if (isValidMove(newX, newY)) {
@@ -112,42 +196,34 @@ public class GameService {
     }
 
     private boolean isValidMove(int x, int y) {
-        if (x < 0 || x >= gameMap.getWidth() || y < 0 || y >= gameMap.getHeight())
-            return false;
-        if (gameMap.getTiles()[y][x] == TileType.WALL)
-            return false;
-
-        return true;
+        return x >= 0 && x < gameMap.getWidth() && y >= 0 && y < gameMap.getHeight() &&
+               gameMap.getTiles()[y][x] != TileType.WALL;
     }
 
-    // getGameState 메서드를 오버로딩해서 메시지를 받을 수 있도록 수정
     public GameStateResponse getGameState() {
         return getGameState("던전에 오신 것을 환영합니다.");
     }
 
-    // 현재 게임 상태를 DTO에 담아서 반환하는 메서드
     public GameStateResponse getGameState(String message) {
-        // 1. TileType[][]을 DTO String 으로 변환
         String[][] mapForDto = new String[gameMap.getHeight()][gameMap.getWidth()];
         for (int y = 0; y < gameMap.getHeight(); y++) {
             for (int x = 0; x < gameMap.getWidth(); x++) {
-                // "WALL", "FLOOR" 등 문자열로 변환
                 mapForDto[y][x] = gameMap.getTiles()[y][x].name();
             }
         }
-        // 맵에 몬스터와 아이템 표시
-        monsters.forEach(m -> mapForDto[m.getY()][m.getX()] = TileType.MONSTER.name());
+
+        monsters.forEach(m -> mapForDto[m.getY()][m.getX()] = m.isBoss() ? TileType.BOSS.name() : TileType.MONSTER.name());
         items.forEach(i -> mapForDto[i.getY()][i.getX()] = TileType.ITEM.name());
         mapForDto[player.getY()][player.getX()] = TileType.PLAYER.name();
 
-        // DTO 변환 로직 업데이트
         GameStateResponse.PlayerInfo playerInfo = GameStateResponse.PlayerInfo.builder()
                 .x(player.getX()).y(player.getY()).hp(player.getHp())
                 .inventory(player.getInventory().stream().map(Item::getName).collect(Collectors.toList()))
                 .build();
 
         List<GameStateResponse.MonsterInfo> monsterInfo = monsters.stream()
-                .map(m -> GameStateResponse.MonsterInfo.builder().x(m.getX()).y(m.getY()).hp(m.getHp()).build())
+                .map(m -> GameStateResponse.MonsterInfo.builder()
+                        .x(m.getX()).y(m.getY()).hp(m.getHp()).isBoss(m.isBoss()).build())
                 .collect(Collectors.toList());
 
         List<GameStateResponse.ItemInfo> itemInfo = items.stream()
@@ -158,24 +234,30 @@ public class GameService {
                 .map(mapForDto).player(playerInfo).monsters(monsterInfo).items(itemInfo)
                 .message(message)
                 .build();
+    }
 
-//        // 플레이어 위치를 맵에 표시
-//        mapForDto[player.getY()][player.getX()] = TileType.PLAYER.name();
-//
-//        // 플레이어 정보를 DTO로 변환
-//        GameStateResponse.PlayerInfo playerInfo = GameStateResponse.PlayerInfo.builder()
-//                .x(player.getX())
-//                .y(player.getY())
-//                .hp(player.getHp())
-//                .build();
-//
-//        // 최종 DTO를 만들어서 반환
-//        return GameStateResponse.builder()
-//                .map(mapForDto)
-//                .player(playerInfo)
-//                // 아직 몬스터가 없으므로 빈 리스트
-//                .monsters(Collections.emptyList())
-//                .message("던전에 오신 것을 환용합니다.")
-//                .build();
+    // Inner class for Room representation
+    private static class Room {
+        int x, y, width, height;
+
+        Room(int x, int y, int width, int height) {
+            this.x = x;
+            this.y = y;
+            this.width = width;
+            this.height = height;
+        }
+
+        int getCenterX() {
+            return x + width / 2;
+        }
+
+        int getCenterY() {
+            return y + height / 2;
+        }
+
+        boolean intersects(Room other) {
+            return (x < other.x + other.width && x + width > other.x &&
+                    y < other.y + other.height && y + height > other.y);
+        }
     }
 }

@@ -17,8 +17,8 @@ public class GameController {
         this.gameService = gameService;
     }
 
-    // 게임 시작 API
-    @PostMapping("/start")
+    // 게임 상태 조회 API
+    @GetMapping("/state")
     public GameStateResponse getGameState() {
         return gameService.getGameState();
     }

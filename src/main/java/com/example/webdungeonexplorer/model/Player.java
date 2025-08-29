@@ -11,13 +11,12 @@ public class Player {
     private int y;
     private int hp;
     private int attackPower;
-    private List<Item> inventory;
+    private List<Item> inventory = new ArrayList<>();
 
     public Player(int x, int y, int hp, int attackPower) {
         this.x = x;
         this.y = y;
         this.hp = hp;
         this.attackPower = attackPower;
-        this.inventory = new ArrayList<>();
     }
 }
