@@ -19,6 +19,7 @@ public class GameService {
     private Player player;
     private List<Monster> monsters;
     private List<Item> items;
+    private boolean isGameOver;
     private final Random random = new Random();
     private static final int HEAL_AMOUNT = 30;
 
@@ -27,6 +28,7 @@ public class GameService {
     }
 
     private void initializeGame() {
+        isGameOver = false;
         generateDungeon(30, 30, 10, 5, 10);
 
         monsters = new ArrayList<>();
@@ -35,7 +37,12 @@ public class GameService {
         player = new Player(0, 0, 100, 15);
         placePlayerInEmptyRoom();
 
-        placeEntities(10, 3, 1, 5); // 10 monsters, 3 keys, 1 boss, 5 potions
+        placeEntities(10, 3, 1, 5);
+    }
+
+    public GameStateResponse restartGame() {
+        initializeGame();
+        return getGameState("새로운 게임을 시작합니다!");
     }
 
     private void generateDungeon(int width, int height, int maxRooms, int minRoomSize, int maxRoomSize) {
@@ -138,13 +145,14 @@ public class GameService {
                 }
             }
         }
-        // 플레이어 위치는 제외
         emptyCells.removeIf(cell -> cell[0] == player.getX() && cell[1] == player.getY());
         return emptyCells;
     }
 
     public GameStateResponse attack() {
         String message = "공격할 대상이 근처에 없습니다.";
+        if (isGameOver) return getGameState("게임이 종료되었습니다. Y키를 눌러 다시 시작하세요.");
+
         Monster targetMonster = monsters.stream()
                 .filter(m -> Math.abs(m.getX() - player.getX()) <= 1 && Math.abs(m.getY() - player.getY()) <= 1)
                 .findFirst()
@@ -155,6 +163,11 @@ public class GameService {
             if (targetMonster.getHp() > 0) {
                 player.setHp(player.getHp() - targetMonster.getAttackPower());
                 message = (targetMonster.isBoss() ? "보스" : "몬스터") + "와 공격을 주고 받았습니다!";
+                if (player.getHp() <= 0) {
+                    player.setHp(0);
+                    isGameOver = true;
+                    message = "사망했습니다... GAME OVER";
+                }
             } else {
                 message = (targetMonster.isBoss() ? "보스" : "몬스터") + "를 물리쳤습니다!";
                 monsters.remove(targetMonster);
@@ -164,6 +177,7 @@ public class GameService {
     }
 
     public GameStateResponse pickupItem() {
+        if (isGameOver) return getGameState("게임이 종료되었습니다. Y키를 눌러 다시 시작하세요.");
         String message = "주울 아이템이 없습니다.";
         Item targetItem = items.stream()
                 .filter(i -> i.getX() == player.getX() && i.getY() == player.getY())
@@ -185,6 +199,7 @@ public class GameService {
     }
 
     public GameStateResponse movePlayer(String direction) {
+        if (isGameOver) return getGameState("게임이 종료되었습니다. Y키를 눌러 다시 시작하세요.");
         int newX = player.getX();
         int newY = player.getY();
 
@@ -245,7 +260,7 @@ public class GameService {
 
         return GameStateResponse.builder()
                 .map(mapForDto).player(playerInfo).monsters(monsterInfo).items(itemInfo)
-                .message(message)
+                .message(message).isGameOver(this.isGameOver)
                 .build();
     }
 

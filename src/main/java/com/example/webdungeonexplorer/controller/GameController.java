@@ -2,7 +2,9 @@ package com.example.webdungeonexplorer.controller;
 
 import com.example.webdungeonexplorer.dto.GameStateResponse;
 import com.example.webdungeonexplorer.dto.request.MoveRequest;
+import com.example.webdungeonexplorer.service.GameManager;
 import com.example.webdungeonexplorer.service.GameService;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -10,34 +12,39 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("api/game")
 public class GameController {
 
-    private final GameService gameService;
+    private final GameManager gameManager;
 
     @Autowired
-    public GameController(GameService gameService) {
-        this.gameService = gameService;
+    public GameController(GameManager gameManager) {
+        this.gameManager = gameManager;
     }
 
-    // 게임 상태 조회 API
+    private GameService getGameService(HttpSession session) {
+        return gameManager.getGame(session.getId());
+    }
+
     @GetMapping("/state")
-    public GameStateResponse getGameState() {
-        return gameService.getGameState();
+    public GameStateResponse getGameState(HttpSession session) {
+        return getGameService(session).getGameState();
     }
 
     @PostMapping("/move")
-    public GameStateResponse movePlayer(@RequestBody MoveRequest moveRequest) {
-        return gameService.movePlayer(moveRequest.getDirection());
+    public GameStateResponse movePlayer(@RequestBody MoveRequest moveRequest, HttpSession session) {
+        return getGameService(session).movePlayer(moveRequest.getDirection());
     }
 
-    // 공격 API
     @PostMapping("/attack")
-    public GameStateResponse attack() {
-        return gameService.attack();
+    public GameStateResponse attack(HttpSession session) {
+        return getGameService(session).attack();
     }
 
-    // 아이템 줍기 API
     @PostMapping("/pickup")
-    public GameStateResponse pickupItem() {
-        return gameService.pickupItem();
+    public GameStateResponse pickupItem(HttpSession session) {
+        return getGameService(session).pickupItem();
     }
 
+    @PostMapping("/restart")
+    public GameStateResponse restartGame(HttpSession session) {
+        return getGameService(session).restartGame();
+    }
 }

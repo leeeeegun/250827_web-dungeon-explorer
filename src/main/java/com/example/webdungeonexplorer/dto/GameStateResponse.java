@@ -13,6 +13,7 @@ public class GameStateResponse {
     private List<MonsterInfo> monsters;
     private List<ItemInfo> items;
     private String message;
+    private boolean isGameOver;
 
     @Data
     @Builder
