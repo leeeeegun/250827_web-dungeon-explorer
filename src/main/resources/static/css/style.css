@@ -1,45 +1,58 @@
 body {
-    background-color: #282c34;
-    color: white;
-    font-family: sans-serif;
-    text-align: center;
+    background-color: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    /* 텍스트에 레트로 폰트 적용 */
+    font-family: 'Press Start 2P', cursive;
 }
 
-#game-board {
-    display: grid;
-    border: 2px solid #61dafb;
-    width: fit-content;
-    margin: 20px auto;
+#game-container {
+    position: relative;
+    border: 3px solid #888;
 }
 
-.tile {
-    width: 40px;
-    height: 40px;
+canvas {
+    display: block;
+    background-color: #5c94fc;
+    /* 슈퍼 마리오 스타일 하늘색 */
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+}
+
+/* ✨ UI 레이어 스타일 */
+#ui-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 20px;
     box-sizing: border-box;
+    color: white;
+    display: flex;
+    justify-content: space-around;
+    font-size: 16px;
+    text-shadow: 2px 2px #000;
+    pointer-events: none;
+    /* UI가 게임 클릭을 방해하지 않도록 함 */
 }
 
-.FLOOR {
-    background-color: #4a5260;
-    border: 1px solid #3c424d;
+.ui-element {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
-.WALL {
-    background-color: #333;
+.ui-element span {
+    margin-top: 5px;
 }
 
-.PLAYER {
-    background-color: #61dafb;
-    border-radius: 50%;
-    z-index: 10;
-}
-
-
-.MONSTER {
-    background-color: #ff6961; /* 몬스터는 빨간색 */
-    border-radius: 50%;
-}
-
-.ITEM {
-    background-color: #f8d568; /* 아이템은 노란색 */
-    border-radius: 20%;
+#player-icon {
+    width: 24px;
+    height: 24px;
+    /* 캔버스와 마찬가지로 픽셀이 깨지지 않게 처리 */
+    image-rendering: pixelated;
 }
