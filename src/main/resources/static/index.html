@@ -2,34 +2,41 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>Retro Dungeon Explorer</title>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <title>Web Dungeon Explorer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic+Coding&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
+
 <div id="game-container">
     <canvas id="game-canvas"></canvas>
-
-    <!-- 게임 UI (점수, 생명 등)가 표시될 레이어 -->
-    <div id="ui-layer">
-        <div class="ui-element">
-            <span>SCORE</span>
-            <span id="score">000000</span>
+    <div id="ui-container">
+        <div id="game-stats" class="ui-panel">
+            <h2>상태</h2>
+            <div class="stat-item">
+                <span>HP:</span>
+                <span id="hp-value">100</span>
+            </div>
+            <div class="stat-item">
+                <span>인벤토리:</span>
+                <ul id="inventory-list">
+                    <li>비어있음</li>
+                </ul>
+            </div>
         </div>
-        <div class="ui-element">
-            <img id="player-icon" src="" alt="player icon">
-            <span id="lives">x 3</span>
+        <div id="message-log" class="ui-panel">
+            <h2>메시지</h2>
+            <p id="message">던전에 오신 것을 환영합니다.</p>
         </div>
-        <div class="ui-element">
-            <span>WORLD</span>
-            <span id="world">1-1</span>
+        <div id="controls-info" class="ui-panel">
+            <h2>조작키</h2>
+            <ul>
+                <li><b>이동:</b> W, A, S, D 또는 방향키</li>
+                <li><b>공격:</b> 스페이스바</li>
+                <li><b>아이템 줍기:</b> G</li>
+            </ul>
         </div>
     </div>
-
-</div>
-
-<div style="display: none;">
-    <img id="spritesheet" src="https://i.imgur.com/7FEyv2Z.png" alt="spritesheet">
 </div>
 
 <script src="/js/game.js"></script>
