@@ -20,6 +20,7 @@ public class GameService {
     private List<Monster> monsters;
     private List<Item> items;
     private final Random random = new Random();
+    private static final int HEAL_AMOUNT = 30;
 
     public GameService() {
         initializeGame();
@@ -28,21 +29,17 @@ public class GameService {
     private void initializeGame() {
         generateDungeon(30, 30, 10, 5, 10);
 
-        // 아이템 및 몬스터 초기화
         monsters = new ArrayList<>();
         items = new ArrayList<>();
 
-        // 플레이어 배치
         player = new Player(0, 0, 100, 15);
         placePlayerInEmptyRoom();
 
-        // 몬스터, 아이템, 보스 배치
-        placeEntities(10, 3, 1);
+        placeEntities(10, 3, 1, 5); // 10 monsters, 3 keys, 1 boss, 5 potions
     }
 
     private void generateDungeon(int width, int height, int maxRooms, int minRoomSize, int maxRoomSize) {
         gameMap = new GameMap(width, height);
-        // 모든 타일을 벽으로 초기화
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
                 gameMap.setTile(x, y, TileType.WALL);
@@ -107,26 +104,28 @@ public class GameService {
         player.setY(pos[1]);
     }
 
-    private void placeEntities(int monsterCount, int itemCount, int bossCount) {
+    private void placeEntities(int monsterCount, int keyCount, int bossCount, int potionCount) {
         List<int[]> emptyCells = getEmptyCells();
         Collections.shuffle(emptyCells);
 
-        // 몬스터 배치
         for (int i = 0; i < monsterCount && !emptyCells.isEmpty(); i++) {
             int[] pos = emptyCells.remove(0);
             monsters.add(new Monster(pos[0], pos[1], 30, 8, false));
         }
 
-        // 아이템 배치
-        for (int i = 0; i < itemCount && !emptyCells.isEmpty(); i++) {
+        for (int i = 0; i < keyCount && !emptyCells.isEmpty(); i++) {
             int[] pos = emptyCells.remove(0);
-            items.add(new Item(pos[0], pos[1], "GOLD_KEY"));
+            items.add(new Item(pos[0], pos[1], ItemType.KEY));
         }
 
-        // 보스 배치
         for (int i = 0; i < bossCount && !emptyCells.isEmpty(); i++) {
             int[] pos = emptyCells.remove(0);
-            monsters.add(new Monster(pos[0], pos[1], 150, 25, true)); // isBoss = true
+            monsters.add(new Monster(pos[0], pos[1], 150, 25, true));
+        }
+
+        for (int i = 0; i < potionCount && !emptyCells.isEmpty(); i++) {
+            int[] pos = emptyCells.remove(0);
+            items.add(new Item(pos[0], pos[1], ItemType.POTION));
         }
     }
 
@@ -139,6 +138,8 @@ public class GameService {
                 }
             }
         }
+        // 플레이어 위치는 제외
+        emptyCells.removeIf(cell -> cell[0] == player.getX() && cell[1] == player.getY());
         return emptyCells;
     }
 
@@ -170,9 +171,15 @@ public class GameService {
                 .orElse(null);
 
         if (targetItem != null) {
-            player.getInventory().add(targetItem);
-            items.remove(targetItem);
-            message = targetItem.getName() + "을(를) 주웠습니다!";
+            if (targetItem.getType() == ItemType.POTION) {
+                player.setHp(Math.min(player.getMaxHp(), player.getHp() + HEAL_AMOUNT));
+                items.remove(targetItem);
+                message = "물약을 마셔 체력을 " + HEAL_AMOUNT + " 회복했습니다!";
+            } else if (targetItem.getType() == ItemType.KEY) {
+                player.getInventory().add(targetItem);
+                items.remove(targetItem);
+                message = "열쇠를 주웠습니다!";
+            }
         }
         return getGameState(message);
     }
@@ -213,12 +220,18 @@ public class GameService {
         }
 
         monsters.forEach(m -> mapForDto[m.getY()][m.getX()] = m.isBoss() ? TileType.BOSS.name() : TileType.MONSTER.name());
-        items.forEach(i -> mapForDto[i.getY()][i.getX()] = TileType.ITEM.name());
+        items.forEach(i -> {
+            if (i.getType() == ItemType.POTION) {
+                mapForDto[i.getY()][i.getX()] = TileType.POTION.name();
+            } else {
+                mapForDto[i.getY()][i.getX()] = TileType.ITEM.name();
+            }
+        });
         mapForDto[player.getY()][player.getX()] = TileType.PLAYER.name();
 
         GameStateResponse.PlayerInfo playerInfo = GameStateResponse.PlayerInfo.builder()
-                .x(player.getX()).y(player.getY()).hp(player.getHp())
-                .inventory(player.getInventory().stream().map(Item::getName).collect(Collectors.toList()))
+                .x(player.getX()).y(player.getY()).hp(player.getHp()).maxHp(player.getMaxHp())
+                .inventory(player.getInventory().stream().map(item -> item.getType().name()).collect(Collectors.toList()))
                 .build();
 
         List<GameStateResponse.MonsterInfo> monsterInfo = monsters.stream()
@@ -227,7 +240,7 @@ public class GameService {
                 .collect(Collectors.toList());
 
         List<GameStateResponse.ItemInfo> itemInfo = items.stream()
-                .map(i -> GameStateResponse.ItemInfo.builder().x(i.getX()).y(i.getY()).name(i.getName()).build())
+                .map(i -> GameStateResponse.ItemInfo.builder().x(i.getX()).y(i.getY()).type(i.getType()).build())
                 .collect(Collectors.toList());
 
         return GameStateResponse.builder()
@@ -236,7 +249,6 @@ public class GameService {
                 .build();
     }
 
-    // Inner class for Room representation
     private static class Room {
         int x, y, width, height;
 
@@ -247,13 +259,8 @@ public class GameService {
             this.height = height;
         }
 
-        int getCenterX() {
-            return x + width / 2;
-        }
-
-        int getCenterY() {
-            return y + height / 2;
-        }
+        int getCenterX() { return x + width / 2; }
+        int getCenterY() { return y + height / 2; }
 
         boolean intersects(Room other) {
             return (x < other.x + other.width && x + width > other.x &&

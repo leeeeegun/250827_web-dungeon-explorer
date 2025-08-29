@@ -8,5 +8,5 @@ import lombok.Data;
 public class Item {
     private int x;
     private int y;
-    private String name;
+    private ItemType type;
 }

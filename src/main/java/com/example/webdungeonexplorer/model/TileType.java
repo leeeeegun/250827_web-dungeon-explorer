@@ -6,5 +6,6 @@ public enum TileType {
     PLAYER, // 플레이어
     MONSTER, // 몬스터
     BOSS, // 보스
-    ITEM // 아이템
+    ITEM, // 아이템
+    POTION, // 물약
 }

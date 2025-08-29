@@ -20,6 +20,7 @@ public class GameStateResponse {
         private int x;
         private int y;
         private int hp;
+        private int maxHp;
         private List<String> inventory;
     }
 
@@ -37,6 +38,6 @@ public class GameStateResponse {
     public static class ItemInfo {
         private int x;
         private int y;
-        private String name;
+        private com.example.webdungeonexplorer.model.ItemType type;
     }
 }
