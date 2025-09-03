@@ -87,8 +87,7 @@ cd 250827_web-dungeon-explorer
   <tr>
     <td align="center" valign="top">
       <b>던전 탐험</b><br/>
-      <img src="https://i.imgur.com/example.png" alt="게임 플레이 화면" width="600"/>
-      !http://googleusercontent.com/image_generation_content/5
+      <img width="662" height="778" alt="image" src="https://github.com/user-attachments/assets/05dbf14f-d6c4-4533-aceb-f3bde8030223" />
     </td>
   </tr>
 </table>
@@ -100,8 +99,7 @@ cd 250827_web-dungeon-explorer
   <tr>
     <td align="center" valign="top">
       <b>게임 오버</b><br/>
-      <img src="https://i.imgur.com/example_over.png" alt="게임 오버 화면" width="600"/>
-      !http://googleusercontent.com/image_generation_content/4
+      <img width="828" height="772" alt="image" src="https://github.com/user-attachments/assets/617ef9aa-47f0-4ec6-b3ed-341c01016bc0" />
     </td>
   </tr>
 </table>
